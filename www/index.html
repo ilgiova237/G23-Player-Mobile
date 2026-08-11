@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>G23 Player</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap');
+:root{--c:#00FFD1;--c2:#7B2FFF;--c3:#FF2D7B;--bg:#05060a;--bg2:#0b0e16;--fg:#e8ecf3;--muted:#5a6478;--border:#1c2230;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--fg);font-family:'Share Tech Mono',monospace;overflow:hidden;}
+#app{display:flex;flex-direction:column;height:100%;}
+.topbar{display:flex;align-items:center;gap:8px;padding:12px 14px 8px;padding-top:calc(12px + env(safe-area-inset-top));}
+.tb-logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:15px;color:var(--c);text-shadow:0 0 10px var(--c);letter-spacing:2px;}
+.tb-ver{font-size:8px;color:var(--muted);letter-spacing:2px;}
+.tabs{display:flex;gap:4px;margin-left:auto;}
+.ptab{background:transparent;border:1px solid var(--border);border-radius:2px;color:var(--muted);
+  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;padding:7px 10px;}
+.ptab.on{border-color:var(--c);color:var(--c);background:rgba(0,255,209,.08);}
+.ptab.sr-tab.on{border-color:var(--c3);color:var(--c3);background:rgba(255,45,123,.08);}
+main{flex:1;overflow-y:auto;padding:10px 14px calc(14px + env(safe-area-inset-bottom));}
+.page{display:none;flex-direction:column;gap:10px;height:100%;}
+.page.on{display:flex;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px;}
+.ghost-btn{width:100%;padding:12px;background:transparent;border:1px dashed var(--border);color:var(--muted);
+  border-radius:4px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;}
+.ghost-btn:active{border-color:var(--c);color:var(--c);}
+input[type=file]{display:none;}
+.now-playing{display:flex;flex-direction:column;align-items:center;padding:14px 0;}
+.circle-wrap{width:150px;height:150px;position:relative;margin-bottom:10px;}
+canvas#cvs{width:150px;height:150px;}
+.circle-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.cc-time{font-size:16px;color:var(--c);}
+.cc-label{font-size:7px;color:var(--muted);letter-spacing:2px;margin-top:2px;}
+.np-title{font-size:13px;text-align:center;padding:0 10px;max-height:38px;overflow:hidden;}
+.np-artist{font-size:10px;color:var(--muted);margin-top:3px;text-align:center;}
+.progress-row{display:flex;align-items:center;gap:8px;width:100%;margin-top:12px;font-size:9px;color:var(--muted);}
+.progress-bar{flex:1;height:3px;background:var(--border);border-radius:2px;position:relative;}
+.progress-fill{position:absolute;left:0;top:0;height:100%;background:var(--c);border-radius:2px;}
+.transport{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;}
+.ctrl{background:transparent;border:1px solid var(--border);border-radius:50%;color:var(--muted);
+  width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.ctrl.on{border-color:var(--c);color:var(--c);}
+.ctrl-sm{width:32px;height:32px;font-size:8px;border-radius:16px;}
+.ctrl-play{width:56px;height:56px;border-radius:50%;background:var(--c);color:#001510;font-size:20px;border:none;
+  display:flex;align-items:center;justify-content:center;}
+.queue-list{display:flex;flex-direction:column;gap:2px;}
+.q-item{display:flex;align-items:center;gap:8px;padding:9px 6px;border-radius:4px;font-size:11px;}
+.q-item.on{background:rgba(0,255,209,.08);color:var(--c);}
+.q-num{font-size:9px;color:var(--muted);width:20px;}
+.q-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.q-dur{font-size:9px;color:var(--muted);}
+.sr-status{text-align:center;font-size:10px;color:var(--muted);letter-spacing:1px;padding:4px 0;}
+.sr-status.ok{color:var(--c);}
+.sr-status.proc{color:#FFD600;}
+.sr-name{font-size:11px;text-align:center;color:var(--c3);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.presets{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;}
+.preset{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;padding:6px 9px;
+  border:1px solid var(--border);color:var(--muted);background:transparent;border-radius:2px;}
+.ctrl-row{margin-top:8px;}
+.ctrl-hdr{display:flex;justify-content:space-between;font-size:9px;letter-spacing:1px;margin-bottom:5px;}
+.ctrl-name{color:var(--muted);}
+.ctrl-val{color:var(--c);}
+input[type=range]{width:100%;height:24px;-webkit-appearance:none;background:transparent;}
+input[type=range]::-webkit-slider-runnable-track{height:3px;background:var(--border);border-radius:2px;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+  background:var(--c);margin-top:-6.5px;box-shadow:0 0 6px var(--c);}
+.room-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px;}
+.room-btn{font-size:8px;padding:8px 2px;border:1px solid var(--border);color:var(--muted);background:transparent;border-radius:2px;}
+.room-btn.on{border-color:var(--c3);color:var(--c3);background:rgba(255,45,123,.08);}
+.divider{height:1px;background:var(--border);margin:10px 0;}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;}
+.toggle-btn{font-size:9px;padding:5px 12px;border:1px solid var(--border);color:var(--muted);background:transparent;border-radius:2px;}
+.toggle-btn.on{border-color:#FFD600;color:#FFD600;background:rgba(255,214,0,.08);}
+.loop-row{display:flex;align-items:center;gap:5px;}
+.loop-lbl{font-size:9px;color:var(--c3);border:1px solid var(--c3);border-radius:2px;padding:2px 5px;}
+.loop-val{font-size:9px;flex:1;}
+.loop-btn{font-size:8px;padding:7px 5px;border:1px solid var(--border);color:var(--muted);background:transparent;border-radius:2px;flex:1;}
+.loop-btn.on{border-color:var(--c);color:var(--c);}
+.sr-play-row{display:flex;gap:8px;margin-top:4px;}
+.sr-btn{flex:1;padding:12px;border:1px solid var(--border);color:var(--muted);background:transparent;border-radius:4px;font-size:10px;letter-spacing:1px;}
+.sr-btn.play{border-color:var(--c);color:var(--c);}
+.sr-btn:disabled{opacity:.3;}
+.info-page{display:flex;flex-direction:column;align-items:center;padding:40px 20px;gap:6px;}
+.info-logo{font-family:'Orbitron',sans-serif;font-size:38px;font-weight:900;color:var(--c);text-shadow:0 0 18px var(--c);}
+.info-block{width:100%;max-width:320px;text-align:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+.info-label{font-size:8px;letter-spacing:2px;color:var(--muted);margin-bottom:6px;}
+.info-link{color:var(--c);font-size:11px;text-decoration:none;}
+.info-desc{font-size:9px;color:var(--muted);line-height:1.7;}
+.empty-hint{text-align:center;color:var(--muted);font-size:10px;padding:30px 10px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <span class="tb-logo">G23</span>
+    <span class="tb-ver">v1.0.0</span>
+    <div class="tabs">
+      <button class="ptab on" data-page="lib">LIB</button>
+      <button class="ptab sr-tab" data-page="sr">S+R</button>
+      <button class="ptab" data-page="info">INFO</button>
+    </div>
+  </div>
+
+  <main>
+    <div class="page on" id="page-lib">
+      <input type="file" id="fileInput" accept="audio/*" multiple>
+      <button class="ghost-btn" id="pickBtn">+ SELECT AUDIO FILES</button>
+
+      <div class="now-playing" id="npBlock" style="display:none;">
+        <div class="circle-wrap">
+          <canvas id="cvs" width="150" height="150"></canvas>
+          <div class="circle-center"><div class="cc-time" id="ccTime">00:00</div><div class="cc-label">ELAPSED</div></div>
+        </div>
+        <div class="np-title" id="npTitle">—</div>
+        <div class="np-artist" id="npArtist"></div>
+        <div class="progress-row">
+          <span id="tCur">00:00</span>
+          <div class="progress-bar" id="progBar"><div class="progress-fill" id="progFill" style="width:0%;"></div></div>
+          <span id="tDur">00:00</span>
+        </div>
+        <div class="transport">
+          <button class="ctrl ctrl-sm" id="btnShuf">⇄</button>
+          <button class="ctrl" id="btnPrev">⏮</button>
+          <button class="ctrl ctrl-sm" id="btnBack10">-10</button>
+          <button class="ctrl-play" id="btnPlay">▶</button>
+          <button class="ctrl ctrl-sm" id="btnFwd10">+10</button>
+          <button class="ctrl" id="btnNext">⏭</button>
+          <button class="ctrl ctrl-sm" id="btnRep">↺</button>
+        </div>
+      </div>
+
+      <div class="card" id="queueCard" style="display:none;">
+        <div class="queue-list" id="queueList"></div>
+      </div>
+      <div class="empty-hint" id="emptyHint">No files selected yet.</div>
+    </div>
+
+    <div class="page" id="page-sr">
+      <button class="ghost-btn" id="srPickBtn">+ SELECT AUDIO FILE</button>
+      <button class="ghost-btn" id="srUseCurrentBtn">↳ USE CURRENTLY PLAYING TRACK</button>
+      <input type="file" id="srFileInput" accept="audio/*">
+      <div class="sr-name" id="srFileName"></div>
+      <div class="sr-status" id="srStatus">Load a file to begin</div>
+
+      <div class="card">
+        <div class="presets" id="presetRow"></div>
+      </div>
+
+      <div class="card">
+        <div class="ctrl-row">
+          <div class="ctrl-hdr"><span class="ctrl-name">SPEED</span><span class="ctrl-val" id="speedVal">0.85x</span></div>
+          <input type="range" id="speedSlider" min="0.4" max="1.6" step="0.01" value="0.85">
+          <button class="loop-btn" id="autoSpeedBtn" style="margin-top:4px;" disabled>AUTO SPEED (estimate)</button>
+        </div>
+        <div class="divider"></div>
+        <div class="ctrl-row">
+          <div class="ctrl-hdr"><span class="ctrl-name">REVERB MIX</span><span class="ctrl-val" id="reverbVal">60%</span></div>
+          <input type="range" id="reverbSlider" min="0" max="100" step="1" value="60">
+        </div>
+        <div class="ctrl-hdr" style="margin-top:6px;"><span class="ctrl-name">ROOM TYPE</span></div>
+        <div class="room-grid" id="roomGrid">
+          <button class="room-btn on" data-type="hall">HALL</button>
+          <button class="room-btn" data-type="room">ROOM</button>
+          <button class="room-btn" data-type="plate">PLATE</button>
+          <button class="room-btn" data-type="cave">CAVE</button>
+          <button class="room-btn" data-type="spring">SPRING</button>
+        </div>
+        <div class="divider"></div>
+        <div class="ctrl-row">
+          <div class="ctrl-hdr"><span class="ctrl-name">BASS BOOST</span><span class="ctrl-val" id="bassVal">+0 dB</span></div>
+          <input type="range" id="bassSlider" min="-6" max="12" step="0.5" value="0">
+        </div>
+        <div class="divider"></div>
+        <div class="ctrl-row">
+          <div class="ctrl-hdr"><span class="ctrl-name">VOLUME</span><span class="ctrl-val" id="volVal">100%</span></div>
+          <input type="range" id="volSlider" min="0" max="150" step="1" value="100">
+        </div>
+        <div class="divider"></div>
+        <div class="toggle-row"><span class="ctrl-name">NOSTALGIA</span><button class="toggle-btn" id="nostBtn">OFF</button></div>
+      </div>
+
+      <div class="card">
+        <div class="ctrl-hdr"><span class="ctrl-name">LOOP A → B</span></div>
+        <div class="loop-row">
+          <span class="loop-lbl">A</span><span class="loop-val" id="loopAVal">--:--</span>
+          <button class="loop-btn" id="loopSetA" disabled>SET</button>
+          <span class="loop-lbl">B</span><span class="loop-val" id="loopBVal">--:--</span>
+          <button class="loop-btn" id="loopSetB" disabled>SET</button>
+        </div>
+        <div class="loop-row" style="margin-top:6px;">
+          <button class="loop-btn" id="loopToggle" disabled>ENABLE</button>
+          <button class="loop-btn" id="loopClear" disabled>CLEAR</button>
+        </div>
+        <div class="sr-status" id="loopStatus" style="margin-top:4px;">Set both points first.</div>
+      </div>
+
+      <div class="sr-play-row">
+        <button class="sr-btn" id="srStopBtn" disabled>■ STOP</button>
+        <button class="sr-btn play" id="srPlayBtn" disabled>▶ PLAY</button>
+      </div>
+      <button class="ghost-btn" id="srRenderBtn" disabled style="margin-top:8px;">⬇ RENDER & DOWNLOAD WAV</button>
+    </div>
+
+    <div class="page" id="page-info">
+      <div class="info-page">
+        <div class="info-logo">G23</div>
+        <div style="font-size:12px;letter-spacing:4px;">PLAYER</div>
+        <div style="font-size:8px;color:var(--muted);margin-top:4px;">v1.0.0 · ANDROID</div>
+        <div class="info-block">
+          <div class="info-label">CREATED BY</div>
+          <a class="info-link" href="https://github.com/ilgiova237" target="_blank">github.com/ilgiova237</a>
+        </div>
+        <div class="info-block">
+          <div class="info-label">NOTE</div>
+          <div class="info-desc">Files are picked each session (Android does not let apps silently keep folder access). Nothing is ever uploaded — everything runs on-device, fully offline.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

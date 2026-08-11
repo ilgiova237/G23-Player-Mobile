@@ -1,0 +1,9 @@
+{
+  "appId": "com.ilgiova237.g23player",
+  "appName": "G23 Player",
+  "webDir": "www",
+  "backgroundColor": "#05060a",
+  "android": {
+    "allowMixedContent": false
+  }
+}
