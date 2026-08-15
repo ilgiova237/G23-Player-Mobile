@@ -31,11 +31,10 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
-      - name: Copy widget code into the generated project (if present)
+      - name: Lower minSdkVersion for broader device support
         run: |
-          if [ -d "android-widget" ]; then
-            cp -r android-widget/* android/app/src/main/ 2>/dev/null || true
-          fi
+          sed -i 's/minSdkVersion = [0-9]*/minSdkVersion = 21/' android/variables.gradle
+          cat android/variables.gradle
 
       - name: Sync web assets
         run: npx cap sync android

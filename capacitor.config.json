@@ -3,7 +3,5 @@
   "appName": "G23 Player",
   "webDir": "www",
   "backgroundColor": "#05060a",
-  "android": {
-    "allowMixedContent": false
-  }
+  "android": { "allowMixedContent": false }
 }
