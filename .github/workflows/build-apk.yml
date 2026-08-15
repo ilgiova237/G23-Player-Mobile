@@ -1,54 +1,51 @@
-name: Build Android APK
+﻿name: Build Android APK
 
 on:
-  workflow_dispatch:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Setup Java
+      - name: Set up Java JDK
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: 17
+          distribution: 'zulu'
+          java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Add Android platform
-        run: npx cap add android
-
-      - name: Lower minSdkVersion for broader device support
+      - name: Install Dependencies
         run: |
-          sed -i 's/minSdkVersion = [0-9]*/minSdkVersion = 21/' android/variables.gradle
-          cat android/variables.gradle
+          npm install
 
-      - name: Sync web assets
-        run: npx cap sync android
+      - name: Add and Sync Capacitor Android
+        run: |
+          npx cap add android || true
+          npx cap sync android
 
-      - name: Build debug APK
-        working-directory: android
       - name: Override minSdkVersion to 22
         run: |
-          find . -type f \( -name '*.gradle' -o -name 'AndroidManifest.xml' \) -exec sed -i 's/minSdkVersion 21/minSdkVersion 22/g' {} +
-          find . -type f \( -name '*.gradle' -o -name 'AndroidManifest.xml' \) -exec sed -i 's/minSdkVersion = 21/minSdkVersion = 22/g' {} +
-        run: chmod +x gradlew && ./gradlew assembleDebug
+          find android -type f \( -name '*.gradle' -o -name 'AndroidManifest.xml' \) -exec sed -i 's/minSdkVersion 21/minSdkVersion 22/g' {} +
+          find android -type f \( -name '*.gradle' -o -name 'AndroidManifest.xml' \) -exec sed -i 's/minSdkVersion = 21/minSdkVersion = 22/g' {} +
 
-      - name: Upload APK
+      - name: Build Debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: G23Player-debug-apk
+          name: app-debug.apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
