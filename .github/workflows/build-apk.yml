@@ -41,6 +41,10 @@ jobs:
 
       - name: Build debug APK
         working-directory: android
+      - name: Override minSdkVersion to 22
+        run: |
+          find . -type f \( -name '*.gradle' -o -name 'AndroidManifest.xml' \) -exec sed -i 's/minSdkVersion 21/minSdkVersion 22/g' {} +
+          find . -type f \( -name '*.gradle' -o -name 'AndroidManifest.xml' \) -exec sed -i 's/minSdkVersion = 21/minSdkVersion = 22/g' {} +
         run: chmod +x gradlew && ./gradlew assembleDebug
 
       - name: Upload APK
